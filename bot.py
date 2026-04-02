@@ -3,30 +3,23 @@ import json
 import hmac
 import hashlib
 import requests
+from urllib.parse import unquote, parse_qsl
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__, static_folder="static")
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-SIGNAL_GROUP_ID = os.environ.get("SIGNAL_GROUP_ID")  # e.g. -1001234567890
-ADMIN_IDS = set(os.environ.get("ADMIN_IDS", "").split(","))  # comma-separated user IDs
+SIGNAL_GROUP_ID = os.environ.get("SIGNAL_GROUP_ID")
+ADMIN_IDS = set(os.environ.get("ADMIN_IDS", "").split(","))
 
 
 def verify_telegram_data(init_data: str) -> bool:
-    """Verify that the Mini App data actually comes from Telegram."""
     try:
-        parsed = {}
-        for part in init_data.split("&"):
-            k, v = part.split("=", 1)
-            parsed[k] = v
-
+        parsed = dict(parse_qsl(init_data, keep_blank_values=True))
         received_hash = parsed.pop("hash", None)
         if not received_hash:
             return False
-
-        data_check = "\n".join(
-            f"{k}={v}" for k, v in sorted(parsed.items())
-        )
+        data_check = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
         secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
         computed = hmac.new(secret_key, data_check.encode(), hashlib.sha256).hexdigest()
         return hmac.compare_digest(computed, received_hash)
@@ -36,11 +29,9 @@ def verify_telegram_data(init_data: str) -> bool:
 
 def get_user_id_from_init_data(init_data: str) -> str | None:
     try:
-        for part in init_data.split("&"):
-            k, v = part.split("=", 1)
-            if k == "user":
-                user = json.loads(requests.utils.unquote(v))
-                return str(user.get("id"))
+        parsed = dict(parse_qsl(init_data, keep_blank_values=True))
+        user = json.loads(unquote(parsed.get("user", "{}")))
+        return str(user.get("id"))
     except Exception:
         return None
 
