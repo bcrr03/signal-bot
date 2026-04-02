@@ -47,6 +47,10 @@ def send_signal(text: str):
     return resp.ok, resp.text
 
 
+def fmt(val: str) -> str:
+    return val if val else "OPEN"
+
+
 @app.route("/send-signal", methods=["POST"])
 def handle_signal():
     data = request.json
@@ -67,31 +71,35 @@ def handle_signal():
 
     signal_type = data.get("type")
     pair = data.get("pair", "XAUUSD")
+    low_risk = data.get("low_risk", False)
+
+    low_risk_line = "\n⚠️ <b>LOW RISK</b>" if low_risk else ""
 
     if signal_type in ("BUY NOW", "SELL NOW"):
-        tp1 = data.get("tp1", "")
-        tp2 = data.get("tp2", "")
-        tp3 = data.get("tp3", "")
-        sl  = data.get("sl", "")
+        tp1 = fmt(data.get("tp1", ""))
+        tp2 = fmt(data.get("tp2", ""))
+        tp3 = fmt(data.get("tp3", ""))
+        sl  = fmt(data.get("sl", ""))
         emoji = "🟢" if signal_type == "BUY NOW" else "🔴"
         text = (
-            f"{emoji} <b>{signal_type} {pair}</b>\n"
+            f"{emoji} <b>{signal_type} {pair}</b>{low_risk_line}\n"
             f"━━━━━━━━━━━━━━━\n"
             f"• TP1: <b>{tp1}</b>\n"
             f"• TP2: <b>{tp2}</b>\n"
             f"• TP3: <b>{tp3}</b>\n"
             f"• SL:  <b>{sl}</b>"
         )
+
     elif signal_type in ("BUY ZONE", "SELL ZONE"):
-        zone_low  = data.get("zone_low", "")
-        zone_high = data.get("zone_high", "")
-        tp1 = data.get("tp1", "")
-        tp2 = data.get("tp2", "")
-        tp3 = data.get("tp3", "")
-        sl  = data.get("sl", "")
+        zone_low  = fmt(data.get("zone_low", ""))
+        zone_high = fmt(data.get("zone_high", ""))
+        tp1 = fmt(data.get("tp1", ""))
+        tp2 = fmt(data.get("tp2", ""))
+        tp3 = fmt(data.get("tp3", ""))
+        sl  = fmt(data.get("sl", ""))
         emoji = "🟢" if signal_type == "BUY ZONE" else "🔴"
         text = (
-            f"{emoji} <b>{signal_type} {pair}</b>\n"
+            f"{emoji} <b>{signal_type} {pair}</b>{low_risk_line}\n"
             f"━━━━━━━━━━━━━━━\n"
             f"• Zone: <b>{zone_low} – {zone_high}</b>\n"
             f"• TP1: <b>{tp1}</b>\n"

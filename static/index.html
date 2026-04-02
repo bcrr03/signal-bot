@@ -62,7 +62,6 @@
   }
 
   .type-btn:active { transform: scale(0.96); opacity: 0.85; }
-
   .type-btn.buy  { background: #1a3d2b; color: #4ade80; }
   .type-btn.sell { background: #3d1a1a; color: #f87171; }
   .type-btn.selected { outline: 2.5px solid currentColor; }
@@ -70,9 +69,7 @@
   .form-section { display: none; }
   .form-section.visible { display: block; }
 
-  .field-group {
-    margin-bottom: 14px;
-  }
+  .field-group { margin-bottom: 14px; }
 
   .field-label {
     font-size: 12px;
@@ -83,12 +80,10 @@
     letter-spacing: 0.3px;
   }
 
-  .field-row {
-    display: grid;
-    gap: 8px;
-  }
+  .field-row { display: grid; gap: 8px; }
   .field-row.two { grid-template-columns: 1fr 1fr; }
   .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field-row.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
 
   input[type="text"], input[type="number"] {
     width: 100%;
@@ -104,10 +99,55 @@
   }
 
   input::placeholder { color: var(--tg-theme-hint-color, #555); font-weight: 400; }
+  input:focus { outline: 1.5px solid var(--tg-theme-button-color, #2481cc); }
 
-  input:focus {
-    outline: 1.5px solid var(--tg-theme-button-color, #2481cc);
+  /* LOW RISK toggle */
+  .low-risk-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--tg-theme-secondary-bg-color, #1c1c1e);
+    border-radius: 12px;
+    padding: 13px 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    user-select: none;
   }
+
+  .low-risk-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle {
+    width: 44px;
+    height: 26px;
+    background: #3a3a3a;
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle.on { background: #f59e0b; }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+  }
+
+  .toggle.on::after { transform: translateX(18px); }
 
   .send-btn {
     width: 100%;
@@ -164,12 +204,6 @@
   .toast.error { background: #3d1a1a; color: #f87171; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  .divider {
-    height: 1px;
-    background: var(--tg-theme-secondary-bg-color, #2a2a2a);
-    margin: 20px 0;
-  }
-
   .section-title {
     font-size: 12px;
     font-weight: 600;
@@ -195,10 +229,10 @@
 
 <p class="section-title">Signal type</p>
 <div class="type-grid">
-  <button class="type-btn buy"  onclick="selectType('BUY NOW')">🟢 BUY<br>NOW</button>
-  <button class="type-btn sell" onclick="selectType('SELL NOW')">🔴 SELL<br>NOW</button>
-  <button class="type-btn buy"  onclick="selectType('BUY ZONE')">🟢 BUY<br>ZONE</button>
-  <button class="type-btn sell" onclick="selectType('SELL ZONE')">🔴 SELL<br>ZONE</button>
+  <button class="type-btn buy"  onclick="selectType('BUY NOW', this)">🟢 BUY<br>NOW</button>
+  <button class="type-btn sell" onclick="selectType('SELL NOW', this)">🔴 SELL<br>NOW</button>
+  <button class="type-btn buy"  onclick="selectType('BUY ZONE', this)">🟢 BUY<br>ZONE</button>
+  <button class="type-btn sell" onclick="selectType('SELL ZONE', this)">🔴 SELL<br>ZONE</button>
 </div>
 
 <!-- NOW form -->
@@ -206,17 +240,13 @@
   <p class="section-title">Prijsniveaus</p>
 
   <div class="field-group">
-    <span class="field-label">TP1 · TP2 · TP3</span>
-    <div class="field-row three">
-      <input type="number" id="now-tp1" placeholder="TP1" inputmode="decimal">
-      <input type="number" id="now-tp2" placeholder="TP2" inputmode="decimal">
-      <input type="number" id="now-tp3" placeholder="TP3" inputmode="decimal">
+    <span class="field-label">TP1 · TP2 · TP3 · SL</span>
+    <div class="field-row four">
+      <input type="number" id="now-tp1" placeholder="TP1" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="now-tp2" placeholder="TP2" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="now-tp3" placeholder="TP3" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="now-sl"  placeholder="SL"  inputmode="decimal" oninput="updatePreview()">
     </div>
-  </div>
-
-  <div class="field-group">
-    <span class="field-label">Stop Loss</span>
-    <input type="number" id="now-sl" placeholder="SL" inputmode="decimal">
   </div>
 </div>
 
@@ -227,24 +257,26 @@
   <div class="field-group">
     <span class="field-label">Zone (laag – hoog)</span>
     <div class="field-row two">
-      <input type="number" id="zone-low"  placeholder="Laag" inputmode="decimal">
-      <input type="number" id="zone-high" placeholder="Hoog" inputmode="decimal">
+      <input type="number" id="zone-low"  placeholder="Laag" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="zone-high" placeholder="Hoog" inputmode="decimal" oninput="updatePreview()">
     </div>
   </div>
 
   <div class="field-group">
-    <span class="field-label">TP1 · TP2 · TP3</span>
-    <div class="field-row three">
-      <input type="number" id="zone-tp1" placeholder="TP1" inputmode="decimal">
-      <input type="number" id="zone-tp2" placeholder="TP2" inputmode="decimal">
-      <input type="number" id="zone-tp3" placeholder="TP3" inputmode="decimal">
+    <span class="field-label">TP1 · TP2 · TP3 · SL</span>
+    <div class="field-row four">
+      <input type="number" id="zone-tp1" placeholder="TP1" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="zone-tp2" placeholder="TP2" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="zone-tp3" placeholder="TP3" inputmode="decimal" oninput="updatePreview()">
+      <input type="number" id="zone-sl"  placeholder="SL"  inputmode="decimal" oninput="updatePreview()">
     </div>
   </div>
+</div>
 
-  <div class="field-group">
-    <span class="field-label">Stop Loss</span>
-    <input type="number" id="zone-sl" placeholder="SL" inputmode="decimal">
-  </div>
+<!-- LOW RISK toggle -->
+<div class="low-risk-row" id="low-risk-row" onclick="toggleLowRisk()" style="display:none;">
+  <span class="low-risk-label">⚠️ LOW RISK trade</span>
+  <div class="toggle" id="low-risk-toggle"></div>
 </div>
 
 <div class="signal-preview" id="preview"></div>
@@ -261,27 +293,41 @@
   tg.enableClosingConfirmation();
 
   let currentType = null;
+  let lowRisk = false;
+
   const pair = () => document.getElementById("pair").value;
 
-  function selectType(type) {
+  function selectType(type, btn) {
     currentType = type;
     document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("selected"));
-    event.currentTarget.classList.add("selected");
+    btn.classList.add("selected");
 
     const isZone = type.includes("ZONE");
     document.getElementById("form-now").classList.toggle("visible", !isZone);
     document.getElementById("form-zone").classList.toggle("visible", isZone);
+    document.getElementById("low-risk-row").style.display = "flex";
 
     document.getElementById("send-btn").disabled = false;
     document.getElementById("send-btn").textContent = `Verstuur ${type} →`;
 
     updatePreview();
 
-    // focus first input
     setTimeout(() => {
       const first = document.querySelector(".form-section.visible input");
       if (first) first.focus();
     }, 50);
+  }
+
+  function toggleLowRisk() {
+    lowRisk = !lowRisk;
+    document.getElementById("low-risk-toggle").classList.toggle("on", lowRisk);
+    updatePreview();
+    tg.HapticFeedback.selectionChanged();
+  }
+
+  function val(id) {
+    const v = document.getElementById(id).value.trim();
+    return v === "" ? "OPEN" : v;
   }
 
   function getValues() {
@@ -291,21 +337,23 @@
       return {
         type: currentType,
         pair: pair(),
-        zone_low:  document.getElementById("zone-low").value,
-        zone_high: document.getElementById("zone-high").value,
-        tp1: document.getElementById("zone-tp1").value,
-        tp2: document.getElementById("zone-tp2").value,
-        tp3: document.getElementById("zone-tp3").value,
-        sl:  document.getElementById("zone-sl").value,
+        zone_low:  val("zone-low"),
+        zone_high: val("zone-high"),
+        tp1: val("zone-tp1"),
+        tp2: val("zone-tp2"),
+        tp3: val("zone-tp3"),
+        sl:  val("zone-sl"),
+        low_risk: lowRisk,
       };
     } else {
       return {
         type: currentType,
         pair: pair(),
-        tp1: document.getElementById("now-tp1").value,
-        tp2: document.getElementById("now-tp2").value,
-        tp3: document.getElementById("now-tp3").value,
-        sl:  document.getElementById("now-sl").value,
+        tp1: val("now-tp1"),
+        tp2: val("now-tp2"),
+        tp3: val("now-tp3"),
+        sl:  val("now-sl"),
+        low_risk: lowRisk,
       };
     }
   }
@@ -316,21 +364,20 @@
     if (!v || !currentType) { el.classList.remove("visible"); return; }
 
     const emoji = currentType.startsWith("BUY") ? "🟢" : "🔴";
-    let lines = [`${emoji} ${currentType} ${v.pair}`, `━━━━━━━━━━━━━━━`];
+    let lines = [`${emoji} ${currentType} ${v.pair}`];
+    if (v.low_risk) lines.push(`⚠️ LOW RISK`);
+    lines.push(`━━━━━━━━━━━━━━━`);
 
     if (currentType.includes("ZONE")) {
-      lines.push(`• Zone: ${v.zone_low || "?"} – ${v.zone_high || "?"}`);
+      lines.push(`• Zone: ${v.zone_low} – ${v.zone_high}`);
     }
-    lines.push(`• TP1: ${v.tp1 || "?"}`, `• TP2: ${v.tp2 || "?"}`, `• TP3: ${v.tp3 || "?"}`, `• SL:  ${v.sl || "?"}`);
+    lines.push(`• TP1: ${v.tp1}`, `• TP2: ${v.tp2}`, `• TP3: ${v.tp3}`, `• SL:  ${v.sl}`);
 
     el.textContent = lines.join("\n");
     el.classList.add("visible");
   }
 
-  // live preview on input
-  document.querySelectorAll("input, select").forEach(el => {
-    el.addEventListener("input", updatePreview);
-  });
+  document.getElementById("pair").addEventListener("change", updatePreview);
 
   function showToast(msg, error = false) {
     const t = document.getElementById("toast");
@@ -377,9 +424,12 @@
     document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("selected"));
     document.querySelectorAll(".form-section").forEach(s => s.classList.remove("visible"));
     document.getElementById("preview").classList.remove("visible");
+    document.getElementById("low-risk-row").style.display = "none";
+    document.getElementById("low-risk-toggle").classList.remove("on");
     document.getElementById("send-btn").disabled = true;
     document.getElementById("send-btn").textContent = "Kies een signal type ↑";
     currentType = null;
+    lowRisk = false;
   }
 </script>
 </body>
