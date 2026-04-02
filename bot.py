@@ -36,14 +36,15 @@ def get_user_id_from_init_data(init_data: str) -> str | None:
         return None
 
 
-def send_signal(text: str) -> bool:
+def send_signal(text: str):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     resp = requests.post(url, json={
         "chat_id": SIGNAL_GROUP_ID,
         "text": text,
         "parse_mode": "HTML"
     })
-    return resp.ok
+    print(f"[Telegram] status={resp.status_code} body={resp.text}", flush=True)
+    return resp.ok, resp.text
 
 
 @app.route("/send-signal", methods=["POST"])
@@ -51,11 +52,17 @@ def handle_signal():
     data = request.json
     init_data = data.get("initData", "")
 
+    print(f"[Request] ADMIN_IDS={ADMIN_IDS} GROUP={SIGNAL_GROUP_ID}", flush=True)
+
     if not verify_telegram_data(init_data):
+        print("[Auth] Telegram verification failed", flush=True)
         return jsonify({"ok": False, "error": "Unauthorized"}), 403
 
     user_id = get_user_id_from_init_data(init_data)
+    print(f"[Auth] user_id={user_id}", flush=True)
+
     if user_id not in ADMIN_IDS:
+        print(f"[Auth] user {user_id} not in admin list", flush=True)
         return jsonify({"ok": False, "error": "Not an admin"}), 403
 
     signal_type = data.get("type")
@@ -75,7 +82,6 @@ def handle_signal():
             f"• TP3: <b>{tp3}</b>\n"
             f"• SL:  <b>{sl}</b>"
         )
-
     elif signal_type in ("BUY ZONE", "SELL ZONE"):
         zone_low  = data.get("zone_low", "")
         zone_high = data.get("zone_high", "")
@@ -96,8 +102,8 @@ def handle_signal():
     else:
         return jsonify({"ok": False, "error": "Unknown signal type"}), 400
 
-    ok = send_signal(text)
-    return jsonify({"ok": ok})
+    ok, tg_response = send_signal(text)
+    return jsonify({"ok": ok, "tg": tg_response})
 
 
 @app.route("/")
