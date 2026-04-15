@@ -7,283 +7,144 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--tg-theme-bg-color, #0e0e0e);
-    color: var(--tg-theme-text-color, #ffffff);
-    min-height: 100vh;
-    padding: 16px;
-  }
-
-  .pair-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-
-  .pair-label {
-    font-size: 13px;
-    color: var(--tg-theme-hint-color, #888);
-    white-space: nowrap;
-  }
-
-  .pair-select {
-    flex: 1;
-    background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-    color: var(--tg-theme-text-color, #fff);
-    border: none;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 600;
-    outline: none;
-    -webkit-appearance: none;
-  }
-
-  .type-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-
-  .type-btn {
-    padding: 18px 10px;
-    border-radius: 14px;
-    border: none;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.1s;
-    line-height: 1.3;
-  }
-
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--tg-theme-bg-color, #0e0e0e); color: var(--tg-theme-text-color, #ffffff); min-height: 100vh; padding: 16px; }
+  .tab-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }
+  .tab-btn { padding: 11px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--tg-theme-secondary-bg-color, #1c1c1e); color: var(--tg-theme-hint-color, #888); transition: all 0.15s; }
+  .tab-btn.active { background: var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-text-color, #fff); }
+  .tab-content { display: none; }
+  .tab-content.visible { display: block; }
+  .pair-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .pair-label { font-size: 13px; color: var(--tg-theme-hint-color, #888); white-space: nowrap; }
+  .pair-select { flex: 1; background: var(--tg-theme-secondary-bg-color, #1c1c1e); color: var(--tg-theme-text-color, #fff); border: none; border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 600; outline: none; -webkit-appearance: none; }
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .type-btn { padding: 18px 10px; border-radius: 14px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.1s; line-height: 1.3; }
   .type-btn:active { transform: scale(0.96); opacity: 0.85; }
-  .type-btn.buy  { background: #1a3d2b; color: #4ade80; }
+  .type-btn.buy { background: #1a3d2b; color: #4ade80; }
   .type-btn.sell { background: #3d1a1a; color: #f87171; }
   .type-btn.selected { outline: 2.5px solid currentColor; }
-
   .form-section { display: none; }
   .form-section.visible { display: block; }
-
   .field-group { margin-bottom: 14px; }
-
-  .field-label {
-    font-size: 12px;
-    color: var(--tg-theme-hint-color, #888);
-    margin-bottom: 5px;
-    display: block;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-  }
-
+  .field-label { font-size: 12px; color: var(--tg-theme-hint-color, #888); margin-bottom: 5px; display: block; font-weight: 500; }
   .field-row { display: grid; gap: 8px; }
   .field-row.two { grid-template-columns: 1fr 1fr; }
-  .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
   .field-row.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
-
-  input[type="text"], input[type="number"] {
-    width: 100%;
-    background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-    color: var(--tg-theme-text-color, #fff);
-    border: none;
-    border-radius: 10px;
-    padding: 11px 12px;
-    font-size: 15px;
-    font-weight: 600;
-    outline: none;
-    -webkit-appearance: none;
-  }
-
+  input[type="number"] { width: 100%; background: var(--tg-theme-secondary-bg-color, #1c1c1e); color: var(--tg-theme-text-color, #fff); border: none; border-radius: 10px; padding: 11px 12px; font-size: 15px; font-weight: 600; outline: none; -webkit-appearance: none; }
   input::placeholder { color: var(--tg-theme-hint-color, #555); font-weight: 400; }
   input:focus { outline: 1.5px solid var(--tg-theme-button-color, #2481cc); }
-
-  /* LOW RISK toggle */
-  .low-risk-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-    border-radius: 12px;
-    padding: 13px 16px;
-    margin-bottom: 14px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .low-risk-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #f59e0b;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .toggle {
-    width: 44px;
-    height: 26px;
-    background: #3a3a3a;
-    border-radius: 13px;
-    position: relative;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-
+  .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .level-btn { padding: 14px 10px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--tg-theme-secondary-bg-color, #1c1c1e); color: var(--tg-theme-text-color, #fff); transition: transform 0.1s; }
+  .level-btn:active { transform: scale(0.96); }
+  .level-btn.selected { outline: 2.5px solid var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-color, #2481cc); }
+  .update-input-section { display: none; margin-bottom: 14px; }
+  .update-input-section.visible { display: block; }
+  .low-risk-row { display: flex; align-items: center; justify-content: space-between; background: var(--tg-theme-secondary-bg-color, #1c1c1e); border-radius: 12px; padding: 13px 16px; margin-bottom: 14px; cursor: pointer; user-select: none; }
+  .low-risk-label { font-size: 14px; font-weight: 600; color: #f59e0b; }
+  .toggle { width: 44px; height: 26px; background: #3a3a3a; border-radius: 13px; position: relative; transition: background 0.2s; flex-shrink: 0; }
   .toggle.on { background: #f59e0b; }
-
-  .toggle::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: #fff;
-    border-radius: 50%;
-    top: 3px;
-    left: 3px;
-    transition: transform 0.2s;
-  }
-
+  .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
   .toggle.on::after { transform: translateX(18px); }
-
-  .send-btn {
-    width: 100%;
-    padding: 15px;
-    border-radius: 14px;
-    border: none;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 8px;
-    background: var(--tg-theme-button-color, #2481cc);
-    color: var(--tg-theme-button-text-color, #fff);
-    transition: transform 0.1s, opacity 0.1s;
-    letter-spacing: 0.3px;
-  }
-
+  .send-btn { width: 100%; padding: 15px; border-radius: 14px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; background: var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-text-color, #fff); transition: transform 0.1s; }
   .send-btn:active { transform: scale(0.98); opacity: 0.85; }
   .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .signal-preview {
-    background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    line-height: 1.8;
-    white-space: pre;
-    font-family: monospace;
-    color: var(--tg-theme-hint-color, #aaa);
-    display: none;
-  }
-
-  .signal-preview.visible {
-    display: block;
-    color: var(--tg-theme-text-color, #fff);
-  }
-
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: #1a3d2b;
-    color: #4ade80;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: transform 0.3s;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-
+  .signal-preview { background: var(--tg-theme-secondary-bg-color, #1c1c1e); border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 13px; line-height: 1.8; white-space: pre; font-family: monospace; display: none; }
+  .signal-preview.visible { display: block; color: var(--tg-theme-text-color, #fff); }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a3d2b; color: #4ade80; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; transition: transform 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.error { background: #3d1a1a; color: #f87171; }
   .toast.show { transform: translateX(-50%) translateY(0); }
-
-  .section-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--tg-theme-hint-color, #666);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--tg-theme-hint-color, #666); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
 </style>
 </head>
 <body>
 
-<div class="pair-row">
-  <span class="pair-label">Pair</span>
-  <select class="pair-select" id="pair">
-    <option value="XAUUSD">XAUUSD — Gold</option>
-    <option value="EURUSD">EURUSD</option>
-    <option value="GBPUSD">GBPUSD</option>
-    <option value="USDJPY">USDJPY</option>
-    <option value="BTCUSD">BTCUSD</option>
-  </select>
+<div class="tab-row">
+  <button class="tab-btn active" onclick="switchTab('signal', this)">📊 Signal</button>
+  <button class="tab-btn" onclick="switchTab('update', this)">✏️ Update</button>
 </div>
 
-<p class="section-title">Signal type</p>
-<div class="type-grid">
-  <button class="type-btn buy"  onclick="selectType('BUY NOW', this)">🟢 BUY<br>NOW</button>
-  <button class="type-btn sell" onclick="selectType('SELL NOW', this)">🔴 SELL<br>NOW</button>
-  <button class="type-btn buy"  onclick="selectType('BUY ZONE', this)">🟢 BUY<br>ZONE</button>
-  <button class="type-btn sell" onclick="selectType('SELL ZONE', this)">🔴 SELL<br>ZONE</button>
-</div>
-
-<!-- NOW form -->
-<div class="form-section" id="form-now">
-  <p class="section-title">Prijsniveaus</p>
-
-  <div class="field-group">
-    <span class="field-label">TP1 · TP2 · TP3 · SL</span>
-    <div class="field-row four">
-      <input type="number" id="now-tp1" placeholder="TP1" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="now-tp2" placeholder="TP2" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="now-tp3" placeholder="TP3" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="now-sl"  placeholder="SL"  inputmode="decimal" oninput="updatePreview()">
-    </div>
+<!-- SIGNAL TAB -->
+<div class="tab-content visible" id="tab-signal">
+  <div class="pair-row">
+    <span class="pair-label">Pair</span>
+    <select class="pair-select" id="pair" onchange="updateSignalPreview()">
+      <option value="XAUUSD">XAUUSD — Gold</option>
+      <option value="EURUSD">EURUSD</option>
+      <option value="GBPUSD">GBPUSD</option>
+      <option value="USDJPY">USDJPY</option>
+      <option value="BTCUSD">BTCUSD</option>
+    </select>
   </div>
-</div>
 
-<!-- ZONE form -->
-<div class="form-section" id="form-zone">
-  <p class="section-title">Prijsniveaus</p>
+  <p class="section-title">Signal type</p>
+  <div class="type-grid">
+    <button class="type-btn buy"  onclick="selectType('BUY NOW', this)">🟢 BUY<br>NOW</button>
+    <button class="type-btn sell" onclick="selectType('SELL NOW', this)">🔴 SELL<br>NOW</button>
+    <button class="type-btn buy"  onclick="selectType('BUY ZONE', this)">🟢 BUY<br>ZONE</button>
+    <button class="type-btn sell" onclick="selectType('SELL ZONE', this)">🔴 SELL<br>ZONE</button>
+  </div>
 
-  <div class="field-group">
-    <span class="field-label">Zone (laag – hoog)</span>
-    <div class="field-row two">
-      <input type="number" id="zone-low"  placeholder="Laag" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="zone-high" placeholder="Hoog" inputmode="decimal" oninput="updatePreview()">
+  <div class="form-section" id="form-now">
+    <p class="section-title">Prijsniveaus</p>
+    <div class="field-group">
+      <span class="field-label">TP1 · TP2 · TP3 · SL</span>
+      <div class="field-row four">
+        <input type="number" id="now-tp1" placeholder="TP1" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="now-tp2" placeholder="TP2" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="now-tp3" placeholder="TP3" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="now-sl"  placeholder="SL"  inputmode="decimal" oninput="updateSignalPreview()">
+      </div>
     </div>
   </div>
 
-  <div class="field-group">
-    <span class="field-label">TP1 · TP2 · TP3 · SL</span>
-    <div class="field-row four">
-      <input type="number" id="zone-tp1" placeholder="TP1" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="zone-tp2" placeholder="TP2" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="zone-tp3" placeholder="TP3" inputmode="decimal" oninput="updatePreview()">
-      <input type="number" id="zone-sl"  placeholder="SL"  inputmode="decimal" oninput="updatePreview()">
+  <div class="form-section" id="form-zone">
+    <p class="section-title">Prijsniveaus</p>
+    <div class="field-group">
+      <span class="field-label">Zone (laag – hoog)</span>
+      <div class="field-row two">
+        <input type="number" id="zone-low"  placeholder="Laag" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="zone-high" placeholder="Hoog" inputmode="decimal" oninput="updateSignalPreview()">
+      </div>
+    </div>
+    <div class="field-group">
+      <span class="field-label">TP1 · TP2 · TP3 · SL</span>
+      <div class="field-row four">
+        <input type="number" id="zone-tp1" placeholder="TP1" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="zone-tp2" placeholder="TP2" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="zone-tp3" placeholder="TP3" inputmode="decimal" oninput="updateSignalPreview()">
+        <input type="number" id="zone-sl"  placeholder="SL"  inputmode="decimal" oninput="updateSignalPreview()">
+      </div>
     </div>
   </div>
+
+  <div class="low-risk-row" id="low-risk-row" onclick="toggleLowRisk()" style="display:none;">
+    <span class="low-risk-label">⚠️ LOW RISK trade</span>
+    <div class="toggle" id="low-risk-toggle"></div>
+  </div>
+
+  <div class="signal-preview" id="signal-preview"></div>
+  <button class="send-btn" id="signal-send-btn" onclick="sendSignal()" disabled>Kies een signal type ↑</button>
 </div>
 
-<!-- LOW RISK toggle -->
-<div class="low-risk-row" id="low-risk-row" onclick="toggleLowRisk()" style="display:none;">
-  <span class="low-risk-label">⚠️ LOW RISK trade</span>
-  <div class="toggle" id="low-risk-toggle"></div>
+<!-- UPDATE TAB -->
+<div class="tab-content" id="tab-update">
+  <p class="section-title">Welk level wil je updaten?</p>
+  <div class="level-grid">
+    <button class="level-btn" onclick="selectLevel('TP1', this)">TP1</button>
+    <button class="level-btn" onclick="selectLevel('TP2', this)">TP2</button>
+    <button class="level-btn" onclick="selectLevel('TP3', this)">TP3</button>
+    <button class="level-btn" onclick="selectLevel('SL', this)">SL</button>
+  </div>
+
+  <div class="update-input-section" id="update-input-section">
+    <div class="field-group">
+      <span class="field-label" id="update-field-label">Nieuwe waarde</span>
+      <input type="number" id="update-value" placeholder="Nieuwe prijs" inputmode="decimal" oninput="updateUpdatePreview()">
+    </div>
+  </div>
+
+  <div class="signal-preview" id="update-preview"></div>
+  <button class="send-btn" id="update-send-btn" onclick="sendUpdate()" disabled>Kies een level ↑</button>
 </div>
-
-<div class="signal-preview" id="preview"></div>
-
-<button class="send-btn" id="send-btn" onclick="sendSignal()" disabled>
-  Kies een signal type ↑
-</button>
 
 <div class="toast" id="toast"></div>
 
@@ -294,34 +155,33 @@
 
   let currentType = null;
   let lowRisk = false;
+  let selectedLevel = null;
 
-  const pair = () => document.getElementById("pair").value;
+  function switchTab(tab, btn) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("visible"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + tab).classList.add("visible");
+  }
 
   function selectType(type, btn) {
     currentType = type;
     document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("selected"));
     btn.classList.add("selected");
-
     const isZone = type.includes("ZONE");
     document.getElementById("form-now").classList.toggle("visible", !isZone);
     document.getElementById("form-zone").classList.toggle("visible", isZone);
     document.getElementById("low-risk-row").style.display = "flex";
-
-    document.getElementById("send-btn").disabled = false;
-    document.getElementById("send-btn").textContent = `Verstuur ${type} →`;
-
-    updatePreview();
-
-    setTimeout(() => {
-      const first = document.querySelector(".form-section.visible input");
-      if (first) first.focus();
-    }, 50);
+    document.getElementById("signal-send-btn").disabled = false;
+    document.getElementById("signal-send-btn").textContent = "Verstuur " + type + " →";
+    updateSignalPreview();
+    setTimeout(() => { const f = document.querySelector(".form-section.visible input"); if (f) f.focus(); }, 50);
   }
 
   function toggleLowRisk() {
     lowRisk = !lowRisk;
     document.getElementById("low-risk-toggle").classList.toggle("on", lowRisk);
-    updatePreview();
+    updateSignalPreview();
     tg.HapticFeedback.selectionChanged();
   }
 
@@ -330,54 +190,48 @@
     return v === "" ? "OPEN" : v;
   }
 
-  function getValues() {
+  function getSignalValues() {
     if (!currentType) return null;
     const isZone = currentType.includes("ZONE");
-    if (isZone) {
-      return {
-        type: currentType,
-        pair: pair(),
-        zone_low:  val("zone-low"),
-        zone_high: val("zone-high"),
-        tp1: val("zone-tp1"),
-        tp2: val("zone-tp2"),
-        tp3: val("zone-tp3"),
-        sl:  val("zone-sl"),
-        low_risk: lowRisk,
-      };
-    } else {
-      return {
-        type: currentType,
-        pair: pair(),
-        tp1: val("now-tp1"),
-        tp2: val("now-tp2"),
-        tp3: val("now-tp3"),
-        sl:  val("now-sl"),
-        low_risk: lowRisk,
-      };
-    }
+    const p = document.getElementById("pair").value;
+    if (isZone) return { type: currentType, pair: p, zone_low: val("zone-low"), zone_high: val("zone-high"), tp1: val("zone-tp1"), tp2: val("zone-tp2"), tp3: val("zone-tp3"), sl: val("zone-sl"), low_risk: lowRisk };
+    return { type: currentType, pair: p, tp1: val("now-tp1"), tp2: val("now-tp2"), tp3: val("now-tp3"), sl: val("now-sl"), low_risk: lowRisk };
   }
 
-  function updatePreview() {
-    const v = getValues();
-    const el = document.getElementById("preview");
-    if (!v || !currentType) { el.classList.remove("visible"); return; }
-
+  function updateSignalPreview() {
+    const v = getSignalValues();
+    const el = document.getElementById("signal-preview");
+    if (!v) { el.classList.remove("visible"); return; }
     const emoji = currentType.startsWith("BUY") ? "🟢" : "🔴";
-    let lines = [`${emoji} ${currentType} ${v.pair}`];
-    if (v.low_risk) lines.push(`⚠️ LOW RISK`);
-    lines.push(`━━━━━━━━━━━━━━━`);
-
-    if (currentType.includes("ZONE")) {
-      lines.push(`• Zone: ${v.zone_low} – ${v.zone_high}`);
-    }
-    lines.push(`• TP1: ${v.tp1}`, `• TP2: ${v.tp2}`, `• TP3: ${v.tp3}`, `• SL:  ${v.sl}`);
-
+    let lines = [emoji + " " + currentType + " " + v.pair];
+    if (v.low_risk) lines.push("⚠️ LOW RISK");
+    lines.push("━━━━━━━━━━━━━━━");
+    if (currentType.includes("ZONE")) lines.push("• Zone: " + v.zone_low + " – " + v.zone_high);
+    lines.push("• TP1: " + v.tp1, "• TP2: " + v.tp2, "• TP3: " + v.tp3, "• SL:  " + v.sl);
     el.textContent = lines.join("\n");
     el.classList.add("visible");
   }
 
-  document.getElementById("pair").addEventListener("change", updatePreview);
+  function selectLevel(level, btn) {
+    selectedLevel = level;
+    document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    document.getElementById("update-field-label").textContent = "Nieuwe waarde voor " + level;
+    document.getElementById("update-input-section").classList.add("visible");
+    document.getElementById("update-value").value = "";
+    document.getElementById("update-send-btn").disabled = false;
+    document.getElementById("update-send-btn").textContent = "Verstuur Update " + level + " →";
+    updateUpdatePreview();
+    setTimeout(() => document.getElementById("update-value").focus(), 50);
+  }
+
+  function updateUpdatePreview() {
+    const el = document.getElementById("update-preview");
+    if (!selectedLevel) { el.classList.remove("visible"); return; }
+    const newVal = document.getElementById("update-value").value.trim() || "?";
+    el.textContent = "✏️ UPDATE\n━━━━━━━━━━━━━━━\n• " + selectedLevel + ": " + newVal;
+    el.classList.add("visible");
+  }
 
   function showToast(msg, error = false) {
     const t = document.getElementById("toast");
@@ -387,49 +241,78 @@
   }
 
   async function sendSignal() {
-    const v = getValues();
+    const v = getSignalValues();
     if (!v) return;
-
-    const btn = document.getElementById("send-btn");
+    const btn = document.getElementById("signal-send-btn");
     btn.disabled = true;
     btn.textContent = "Versturen...";
-
     try {
-      const resp = await fetch("/send-signal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...v, initData: tg.initData })
-      });
+      const resp = await fetch("/send-signal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...v, initData: tg.initData }) });
       const data = await resp.json();
-
       if (data.ok) {
         showToast("✓ Signal verstuurd!");
         tg.HapticFeedback.notificationOccurred("success");
-        setTimeout(() => resetForm(), 1200);
+        setTimeout(resetSignalForm, 1200);
       } else {
         showToast(data.error || "Mislukt", true);
         tg.HapticFeedback.notificationOccurred("error");
         btn.disabled = false;
-        btn.textContent = `Verstuur ${currentType} →`;
+        btn.textContent = "Verstuur " + currentType + " →";
       }
     } catch (e) {
       showToast("Verbindingsfout", true);
       btn.disabled = false;
-      btn.textContent = `Verstuur ${currentType} →`;
+      btn.textContent = "Verstuur " + currentType + " →";
     }
   }
 
-  function resetForm() {
-    document.querySelectorAll("input").forEach(i => i.value = "");
+  async function sendUpdate() {
+    if (!selectedLevel) return;
+    const newVal = document.getElementById("update-value").value.trim();
+    if (!newVal) { showToast("Vul een waarde in", true); return; }
+    const btn = document.getElementById("update-send-btn");
+    btn.disabled = true;
+    btn.textContent = "Versturen...";
+    try {
+      const resp = await fetch("/send-update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: selectedLevel, value: newVal, initData: tg.initData }) });
+      const data = await resp.json();
+      if (data.ok) {
+        showToast("✓ Update verstuurd!");
+        tg.HapticFeedback.notificationOccurred("success");
+        setTimeout(resetUpdateForm, 1200);
+      } else {
+        showToast(data.error || "Mislukt", true);
+        tg.HapticFeedback.notificationOccurred("error");
+        btn.disabled = false;
+        btn.textContent = "Verstuur Update " + selectedLevel + " →";
+      }
+    } catch (e) {
+      showToast("Verbindingsfout", true);
+      btn.disabled = false;
+      btn.textContent = "Verstuur Update " + selectedLevel + " →";
+    }
+  }
+
+  function resetSignalForm() {
+    document.querySelectorAll("#tab-signal input").forEach(i => i.value = "");
     document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("selected"));
     document.querySelectorAll(".form-section").forEach(s => s.classList.remove("visible"));
-    document.getElementById("preview").classList.remove("visible");
+    document.getElementById("signal-preview").classList.remove("visible");
     document.getElementById("low-risk-row").style.display = "none";
     document.getElementById("low-risk-toggle").classList.remove("on");
-    document.getElementById("send-btn").disabled = true;
-    document.getElementById("send-btn").textContent = "Kies een signal type ↑";
-    currentType = null;
-    lowRisk = false;
+    document.getElementById("signal-send-btn").disabled = true;
+    document.getElementById("signal-send-btn").textContent = "Kies een signal type ↑";
+    currentType = null; lowRisk = false;
+  }
+
+  function resetUpdateForm() {
+    document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("selected"));
+    document.getElementById("update-input-section").classList.remove("visible");
+    document.getElementById("update-preview").classList.remove("visible");
+    document.getElementById("update-value").value = "";
+    document.getElementById("update-send-btn").disabled = true;
+    document.getElementById("update-send-btn").textContent = "Kies een level ↑";
+    selectedLevel = null;
   }
 </script>
 </body>
