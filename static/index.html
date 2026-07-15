@@ -36,6 +36,8 @@
   .level-btn { padding: 14px 10px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--tg-theme-secondary-bg-color, #1c1c1e); color: var(--tg-theme-text-color, #fff); transition: transform 0.1s; }
   .level-btn:active { transform: scale(0.96); }
   .level-btn.selected { outline: 2.5px solid var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-color, #2481cc); }
+  .level-btn.all { grid-column: span 2; background: #1a2d3d; color: #60a5fa; }
+  .level-btn.all.selected { outline: 2.5px solid #60a5fa; }
   .update-input-section { display: none; margin-bottom: 14px; }
   .update-input-section.visible { display: block; }
   .low-risk-row { display: flex; align-items: center; justify-content: space-between; background: var(--tg-theme-secondary-bg-color, #1c1c1e); border-radius: 12px; padding: 13px 16px; margin-bottom: 14px; cursor: pointer; user-select: none; }
@@ -133,12 +135,25 @@
     <button class="level-btn" onclick="selectLevel('TP2', this)">TP2</button>
     <button class="level-btn" onclick="selectLevel('TP3', this)">TP3</button>
     <button class="level-btn" onclick="selectLevel('SL', this)">SL</button>
+    <button class="level-btn all" onclick="selectLevel('ALL', this)">⚡ ALL — TP1 · TP2 · TP3 · SL</button>
   </div>
 
-  <div class="update-input-section" id="update-input-section">
+  <div class="update-input-section" id="update-input-single">
     <div class="field-group">
       <span class="field-label" id="update-field-label">Nieuwe waarde</span>
       <input type="number" id="update-value" placeholder="Nieuwe prijs" inputmode="decimal" oninput="updateUpdatePreview()">
+    </div>
+  </div>
+
+  <div class="update-input-section" id="update-input-all">
+    <div class="field-group">
+      <span class="field-label">TP1 · TP2 · TP3 · SL (laat leeg om over te slaan)</span>
+      <div class="field-row four">
+        <input type="number" id="all-tp1" placeholder="TP1" inputmode="decimal" oninput="updateUpdatePreview()">
+        <input type="number" id="all-tp2" placeholder="TP2" inputmode="decimal" oninput="updateUpdatePreview()">
+        <input type="number" id="all-tp3" placeholder="TP3" inputmode="decimal" oninput="updateUpdatePreview()">
+        <input type="number" id="all-sl"  placeholder="SL"  inputmode="decimal" oninput="updateUpdatePreview()">
+      </div>
     </div>
   </div>
 
@@ -216,20 +231,41 @@
     selectedLevel = level;
     document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("selected"));
     btn.classList.add("selected");
-    document.getElementById("update-field-label").textContent = "Nieuwe waarde voor " + level;
-    document.getElementById("update-input-section").classList.add("visible");
-    document.getElementById("update-value").value = "";
+    const isSingle = level !== "ALL";
+    document.getElementById("update-input-single").classList.toggle("visible", isSingle);
+    document.getElementById("update-input-all").classList.toggle("visible", !isSingle);
+    if (isSingle) {
+      document.getElementById("update-field-label").textContent = "Nieuwe waarde voor " + level;
+      document.getElementById("update-value").value = "";
+      setTimeout(() => document.getElementById("update-value").focus(), 50);
+    } else {
+      ["all-tp1","all-tp2","all-tp3","all-sl"].forEach(id => document.getElementById(id).value = "");
+      setTimeout(() => document.getElementById("all-tp1").focus(), 50);
+    }
     document.getElementById("update-send-btn").disabled = false;
-    document.getElementById("update-send-btn").textContent = "Verstuur Update " + level + " →";
+    document.getElementById("update-send-btn").textContent = level === "ALL" ? "Verstuur ALL Update →" : "Verstuur Update " + level + " →";
     updateUpdatePreview();
-    setTimeout(() => document.getElementById("update-value").focus(), 50);
   }
 
   function updateUpdatePreview() {
     const el = document.getElementById("update-preview");
     if (!selectedLevel) { el.classList.remove("visible"); return; }
-    const newVal = document.getElementById("update-value").value.trim() || "?";
-    el.textContent = "✏️ UPDATE\n━━━━━━━━━━━━━━━\n• " + selectedLevel + ": " + newVal;
+    let lines = ["✏️ UPDATE", "━━━━━━━━━━━━━━━"];
+    if (selectedLevel === "ALL") {
+      const tp1 = document.getElementById("all-tp1").value.trim();
+      const tp2 = document.getElementById("all-tp2").value.trim();
+      const tp3 = document.getElementById("all-tp3").value.trim();
+      const sl  = document.getElementById("all-sl").value.trim();
+      if (tp1) lines.push("• TP1: " + tp1);
+      if (tp2) lines.push("• TP2: " + tp2);
+      if (tp3) lines.push("• TP3: " + tp3);
+      if (sl)  lines.push("• SL:  " + sl);
+      if (lines.length === 2) { el.classList.remove("visible"); return; }
+    } else {
+      const newVal = document.getElementById("update-value").value.trim() || "?";
+      lines.push("• " + selectedLevel + ": " + newVal);
+    }
+    el.textContent = lines.join("\n");
     el.classList.add("visible");
   }
 
@@ -268,28 +304,56 @@
 
   async function sendUpdate() {
     if (!selectedLevel) return;
-    const newVal = document.getElementById("update-value").value.trim();
-    if (!newVal) { showToast("Vul een waarde in", true); return; }
     const btn = document.getElementById("update-send-btn");
-    btn.disabled = true;
-    btn.textContent = "Versturen...";
-    try {
-      const resp = await fetch("/send-update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: selectedLevel, value: newVal, initData: tg.initData }) });
-      const data = await resp.json();
-      if (data.ok) {
-        showToast("✓ Update verstuurd!");
-        tg.HapticFeedback.notificationOccurred("success");
-        setTimeout(resetUpdateForm, 1200);
-      } else {
-        showToast(data.error || "Mislukt", true);
-        tg.HapticFeedback.notificationOccurred("error");
+    if (selectedLevel === "ALL") {
+      const tp1 = document.getElementById("all-tp1").value.trim();
+      const tp2 = document.getElementById("all-tp2").value.trim();
+      const tp3 = document.getElementById("all-tp3").value.trim();
+      const sl  = document.getElementById("all-sl").value.trim();
+      if (!tp1 && !tp2 && !tp3 && !sl) { showToast("Vul minimaal één waarde in", true); return; }
+      btn.disabled = true;
+      btn.textContent = "Versturen...";
+      try {
+        const resp = await fetch("/send-update-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tp1, tp2, tp3, sl, initData: tg.initData }) });
+        const data = await resp.json();
+        if (data.ok) {
+          showToast("✓ ALL Update verstuurd!");
+          tg.HapticFeedback.notificationOccurred("success");
+          setTimeout(resetUpdateForm, 1200);
+        } else {
+          showToast(data.error || "Mislukt", true);
+          tg.HapticFeedback.notificationOccurred("error");
+          btn.disabled = false;
+          btn.textContent = "Verstuur ALL Update →";
+        }
+      } catch (e) {
+        showToast("Verbindingsfout", true);
+        btn.disabled = false;
+        btn.textContent = "Verstuur ALL Update →";
+      }
+    } else {
+      const newVal = document.getElementById("update-value").value.trim();
+      if (!newVal) { showToast("Vul een waarde in", true); return; }
+      btn.disabled = true;
+      btn.textContent = "Versturen...";
+      try {
+        const resp = await fetch("/send-update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: selectedLevel, value: newVal, initData: tg.initData }) });
+        const data = await resp.json();
+        if (data.ok) {
+          showToast("✓ Update verstuurd!");
+          tg.HapticFeedback.notificationOccurred("success");
+          setTimeout(resetUpdateForm, 1200);
+        } else {
+          showToast(data.error || "Mislukt", true);
+          tg.HapticFeedback.notificationOccurred("error");
+          btn.disabled = false;
+          btn.textContent = "Verstuur Update " + selectedLevel + " →";
+        }
+      } catch (e) {
+        showToast("Verbindingsfout", true);
         btn.disabled = false;
         btn.textContent = "Verstuur Update " + selectedLevel + " →";
       }
-    } catch (e) {
-      showToast("Verbindingsfout", true);
-      btn.disabled = false;
-      btn.textContent = "Verstuur Update " + selectedLevel + " →";
     }
   }
 
@@ -307,9 +371,11 @@
 
   function resetUpdateForm() {
     document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("selected"));
-    document.getElementById("update-input-section").classList.remove("visible");
+    document.getElementById("update-input-single").classList.remove("visible");
+    document.getElementById("update-input-all").classList.remove("visible");
     document.getElementById("update-preview").classList.remove("visible");
     document.getElementById("update-value").value = "";
+    ["all-tp1","all-tp2","all-tp3","all-sl"].forEach(id => document.getElementById(id).value = "");
     document.getElementById("update-send-btn").disabled = true;
     document.getElementById("update-send-btn").textContent = "Kies een level ↑";
     selectedLevel = null;
