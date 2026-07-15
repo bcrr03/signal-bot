@@ -130,6 +130,38 @@ def handle_update():
     return jsonify({"ok": ok, "tg": tg_response})
 
 
+@app.route("/send-update-all", methods=["POST"])
+def handle_update_all():
+    """Update TP1, TP2, TP3 en SL tegelijk in één bericht."""
+    data = request.json
+    user_id, err, code = auth_check(data)
+    if err:
+        return err, code
+
+    tp1 = data.get("tp1", "").strip()
+    tp2 = data.get("tp2", "").strip()
+    tp3 = data.get("tp3", "").strip()
+    sl  = data.get("sl", "").strip()
+
+    if not any([tp1, tp2, tp3, sl]):
+        return jsonify({"ok": False, "error": "Geen waarden opgegeven"}), 400
+
+    lines = ["✏️ <b>UPDATE</b>", "━━━━━━━━━━━━━━━"]
+    if tp1:
+        lines.append(f"• TP1: <b>{tp1}</b>")
+    if tp2:
+        lines.append(f"• TP2: <b>{tp2}</b>")
+    if tp3:
+        lines.append(f"• TP3: <b>{tp3}</b>")
+    if sl:
+        lines.append(f"• SL:  <b>{sl}</b>")
+
+    text = "\n".join(lines)
+
+    ok, tg_response = send_to_group(text)
+    return jsonify({"ok": ok, "tg": tg_response})
+
+
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
